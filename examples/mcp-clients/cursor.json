@@ -1,0 +1,15 @@
+// ~/.cursor/mcp.json                  (global)
+//   …or…
+// .cursor/mcp.json   inside a project (workspace-scoped)
+//
+// Cursor uses the same MCP-server-config shape as Claude Desktop. After
+// editing, Cursor will pick the new server up on the next "Reload window"
+// (Cmd+Shift+P → "Developer: Reload Window").
+{
+  "mcpServers": {
+    "tapinto": {
+      "command": "tapinto",
+      "args": ["mcp"]
+    }
+  }
+}

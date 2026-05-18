@@ -1,0 +1,17 @@
+// ~/Library/Application Support/Claude/claude_desktop_config.json   (macOS)
+// %APPDATA%\Claude\claude_desktop_config.json                        (Windows)
+//
+// Merge this into the existing file — if "mcpServers" already exists, add
+// the "tapinto" entry alongside whatever else you have.
+//
+// After saving, fully quit and restart Claude Desktop. The "tapinto" tools
+// will show up in the tool list: create_tunnel, list_tunnels, get_tunnel,
+// stop_tunnel, whoami.
+{
+  "mcpServers": {
+    "tapinto": {
+      "command": "tapinto",
+      "args": ["mcp"]
+    }
+  }
+}

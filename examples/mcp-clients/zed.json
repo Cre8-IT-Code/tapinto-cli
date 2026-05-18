@@ -1,0 +1,16 @@
+// ~/.config/zed/settings.json
+//
+// Zed names them "context servers" but speaks the same MCP wire protocol.
+// Merge the "context_servers" entry into your existing settings.json (or
+// replace if you don't have one yet). Zed picks up the change live — no
+// restart needed.
+{
+  "context_servers": {
+    "tapinto": {
+      "command": {
+        "path": "tapinto",
+        "args": ["mcp"]
+      }
+    }
+  }
+}

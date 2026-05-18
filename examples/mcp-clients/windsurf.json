@@ -1,0 +1,12 @@
+// ~/.codeium/windsurf/mcp_config.json
+//
+// Same MCP-server-config shape as Claude Desktop and Cursor. Restart
+// Windsurf (or run "Windsurf: Reload Window") after saving.
+{
+  "mcpServers": {
+    "tapinto": {
+      "command": "tapinto",
+      "args": ["mcp"]
+    }
+  }
+}
