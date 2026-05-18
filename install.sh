@@ -2,19 +2,24 @@
 #
 # Tapinto CLI installer. One-shot script that detects OS+arch, fetches the
 # latest GitHub Release archive, verifies the checksum, and drops the binary
-# into /usr/local/bin (or $PREFIX/bin).
+# into $HOME/.local/bin (or $PREFIX/bin).
+#
+# Defaults to a user-local install so you don't need sudo. Set
+# PREFIX=/usr/local (or any other writable prefix) for a system-wide install.
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/Cre8-IT-Code/tapinto-cli/main/install.sh | bash
-#   # or to pin a specific version:
+#   # system-wide (uses sudo if needed):
+#   curl -fsSL https://raw.githubusercontent.com/Cre8-IT-Code/tapinto-cli/main/install.sh | PREFIX=/usr/local bash
+#   # pin a specific version:
 #   curl -fsSL https://raw.githubusercontent.com/Cre8-IT-Code/tapinto-cli/main/install.sh | VERSION=v0.1.0 bash
-#   # or to install to a custom prefix:
-#   curl -fsSL https://raw.githubusercontent.com/Cre8-IT-Code/tapinto-cli/main/install.sh | PREFIX=~/.local bash
 
 set -euo pipefail
 
 REPO="Cre8-IT-Code/tapinto-cli"
-PREFIX="${PREFIX:-/usr/local}"
+# Default to ~/.local — no sudo, works on every supported platform. Users who
+# want a system install can override via PREFIX (and accept the sudo prompt).
+PREFIX="${PREFIX:-${HOME}/.local}"
 BINDIR="${PREFIX}/bin"
 VERSION="${VERSION:-}"
 
@@ -74,32 +79,51 @@ tar -xzf "$tmp/$ASSET" -C "$tmp"
 [ -f "$tmp/tapinto" ] || err "archive missing tapinto binary"
 chmod +x "$tmp/tapinto"
 
-mkdir -p "$BINDIR"
+# Create the dir if needed. mkdir might itself need sudo for system prefixes;
+# do the same fallback dance as the install step.
+if ! mkdir -p "$BINDIR" 2>/dev/null; then
+  info "creating $BINDIR with sudo"
+  sudo mkdir -p "$BINDIR"
+fi
 if [ -w "$BINDIR" ]; then
   install -m 0755 "$tmp/tapinto" "$BINDIR/tapinto"
 else
-  info "$BINDIR not writable; using sudo"
+  info "$BINDIR is not writable by your user — escalating with sudo"
+  info "  (tip: re-run with PREFIX=\$HOME/.local to install without sudo)"
   sudo install -m 0755 "$tmp/tapinto" "$BINDIR/tapinto"
 fi
 
 ok "installed tapinto $VERSION to $BINDIR/tapinto"
 
 # --- post-install ---
-if ! command -v tapinto >/dev/null 2>&1; then
-  info "$BINDIR is not on your PATH. Add it with:"
-  printf '\n  export PATH="%s:$PATH"\n\n' "$BINDIR"
-fi
+# Detect whether the install dir is already on the user's PATH. If not, print
+# copy-pasteable rc lines for the common shells.
+case ":$PATH:" in
+  *":$BINDIR:"*) ;;
+  *)
+    info "$BINDIR is not on your PATH yet. Add this line to your shell rc:"
+    printf '\n  export PATH="%s:$PATH"\n' "$BINDIR"
+    printf '\nQuick add:\n'
+    printf "  # bash:  echo 'export PATH=\"%s:\$PATH\"' >> ~/.bashrc\n"  "$BINDIR"
+    printf "  # zsh:   echo 'export PATH=\"%s:\$PATH\"' >> ~/.zshrc\n"   "$BINDIR"
+    printf "  # fish:  fish_add_path %s\n\n" "$BINDIR"
+    ;;
+esac
 
-cat <<'EOF'
+cat <<EOF
 
 Next:
   tapinto login                            # authenticate
-  tapinto https://localhost:8080 --inspect # tunnel a local server
-  tapinto mcp                              # run as an MCP server for Claude / Cursor / Windsurf / Zed
+  tapinto https://localhost:8080 --inspect # expose a local server
+  tapinto update                           # upgrade the CLI later
+
+Want AI assistants (Claude Desktop, Cursor, Windsurf, Zed) to create
+tunnels on your behalf? Wire 'tapinto mcp' into your MCP client config —
+see https://tapinto.dev/docs/tunnel-vs-mcp-toolkit
 
 First 60 minutes of tunnel time every week are FREE — no credit card.
-After that: $0.005/tunnel-minute, $0.008/mcp-toolkit-minute, USD-billed.
+After that: \$0.005/tunnel-minute, \$0.008/mcp-toolkit-minute, USD-billed.
 
-Docs:    https://tapinto.dev
+Docs:    https://tapinto.dev/docs
 Compare: https://tapinto.dev/compare
 EOF
